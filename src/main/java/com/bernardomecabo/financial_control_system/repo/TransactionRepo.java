@@ -11,5 +11,5 @@ public interface TransactionRepo extends JpaRepository<Transaction,Long>{
 
     @Query("SELECT SUM(CASE WHEN t.transactionType = 'receita' THEN t.value ELSE -t.value END) " +
            "FROM Transaction t WHERE t.user.userId = :userId")
-    BigDecimal calcularSaldo(Long userId);
+    BigDecimal calculateBalance(Long userId);
 }

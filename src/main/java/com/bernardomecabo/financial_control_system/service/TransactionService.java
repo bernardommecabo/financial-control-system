@@ -15,10 +15,14 @@ public class TransactionService {
     private TransactionRepo transactionRepo;
 
     public BigDecimal getBalance(Long userId){
-        return transactionRepo.calcularSaldo(userId);
+        return transactionRepo.calculateBalance(userId);
     }
 
     public List<Transaction> getTransactionsByUserId(Long userId){
         return transactionRepo.findByUserId(userId);
+    }
+
+    public void saveTransaction(Transaction transaction){
+        transactionRepo.save(transaction);
     }
 }
