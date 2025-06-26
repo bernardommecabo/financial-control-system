@@ -1,0 +1,113 @@
+-- Criando o banco de dados com collation Portuguese_Brazil.1252
+CREATE DATABASE personal_finance
+    WITH 
+    OWNER = postgres
+    ENCODING = 'UTF8'
+    LC_COLLATE = 'Portuguese_Brazil.1252'
+    LC_CTYPE = 'Portuguese_Brazil.1252'
+    TEMPLATE = template0
+    CONNECTION LIMIT = -1;
+
+-- Conectando ao banco de dados criado
+\connect personal_finance
+
+-- Criando a tabela de usuários
+CREATE TABLE usuarios (
+    usuario_id SERIAL PRIMARY KEY,
+    nome_usuario VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    senha VARCHAR(50) NOT NULL, -- Senha em texto puro para simplificação
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Criando a tabela de categorias
+CREATE TABLE categorias (
+    categoria_id SERIAL PRIMARY KEY,
+    usuario_id INTEGER REFERENCES usuarios(usuario_id) ON DELETE CASCADE,
+    nome VARCHAR(50) NOT NULL,
+    tipo VARCHAR(10) NOT NULL CHECK (tipo IN ('receita', 'despesa')),
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (usuario_id, nome, tipo)
+);
+
+-- Criando a tabela de transações
+CREATE TABLE transacoes (
+    transacao_id SERIAL PRIMARY KEY,
+    usuario_id INTEGER REFERENCES usuarios(usuario_id) ON DELETE CASCADE,
+    categoria_id INTEGER REFERENCES categorias(categoria_id) ON DELETE SET NULL,
+    valor DECIMAL(10, 2) NOT NULL CHECK (valor > 0),
+    tipo_transacao VARCHAR(10) NOT NULL CHECK (tipo_transacao IN ('receita', 'despesa')),
+    descricao VARCHAR(255),
+    data_transacao DATE NOT NULL DEFAULT CURRENT_DATE,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Índices para otimizar consultas
+CREATE INDEX idx_transacoes_usuario_id ON transacoes(usuario_id);
+CREATE INDEX idx_transacoes_data ON transacoes(data_transacao);
+
+-- Inserindo dados de exemplo em português
+INSERT INTO usuarios (nome_usuario, email, senha) 
+VALUES ('joao_silva', 'joao.silva@example.com', '123456');
+
+INSERT INTO categorias (usuario_id, nome, tipo)
+VALUES 
+    ((SELECT usuario_id FROM usuarios WHERE nome_usuario = 'joao_silva'), 'Salário', 'receita'),
+    ((SELECT usuario_id FROM usuarios WHERE nome_usuario = 'joao_silva'), 'Alimentação', 'despesa'),
+    ((SELECT usuario_id FROM usuarios WHERE nome_usuario = 'joao_silva'), 'Transporte', 'despesa');
+
+INSERT INTO transacoes (usuario_id, categoria_id, valor, tipo_transacao, descricao, data_transacao)
+VALUES 
+    (
+        (SELECT usuario_id FROM usuarios WHERE nome_usuario = 'joao_silva'),
+        (SELECT categoria_id FROM categorias WHERE nome = 'Salário' AND usuario_id = (SELECT usuario_id FROM usuarios WHERE nome_usuario = 'joao_silva')),
+        3000.00,
+        'receita',
+        'Salário mensal',
+        CURRENT_DATE
+    ),
+    (
+        (SELECT usuario_id FROM usuarios WHERE nome_usuario = 'joao_silva'),
+        (SELECT categoria_id FROM categorias WHERE nome = 'Alimentação' AND usuario_id = (SELECT usuario_id FROM usuarios WHERE nome_usuario = 'joao_silva')),
+        150.00,
+        'despesa',
+        'Compras no supermercado',
+        CURRENT_DATE
+    );
+
+-- Clear existing data to avoid conflicts
+DELETE FROM transacoes;
+DELETE FROM categorias;
+DELETE FROM usuarios;
+
+-- Insert sample users into usuarios table
+INSERT INTO usuarios (usuario_id, nome_usuario, email, senha, criado_em) VALUES
+(1, 'Usuário Teste', 'teste@email.com', 'password123', CURRENT_TIMESTAMP),
+(2, 'João Silva', 'joao.silva@email.com', 'password123', CURRENT_TIMESTAMP),
+(3, 'Maria Oliveira', 'maria.oliveira@email.com', 'password123', CURRENT_TIMESTAMP);
+
+-- Insert sample categories for userId=1 into categorias table
+INSERT INTO categorias (categoria_id, nome, tipo, usuario_id) VALUES
+(1, 'Salário', 'receita', 1),
+(2, 'Aluguel', 'despesa', 1),
+(3, 'Supermercado', 'despesa', 1),
+(4, 'Freelance', 'receita', 1),
+(5, 'Transporte', 'despesa', 1);
+
+-- Insert sample categories for userId=2
+INSERT INTO categorias (categoria_id, nome, tipo, usuario_id) VALUES
+(6, 'Salário', 'receita', 2),
+(7, 'Conta de Luz', 'despesa', 2);
+
+-- Insert sample transactions for userId=1 into transacoes table
+INSERT INTO transacoes (transacao_id, usuario_id, categoria_id, valor, tipo_transacao, descricao, data_transacao, criado_em) VALUES
+(1, 1, 1, 3000.00, 'receita', 'Salário mensal', '2025-06-01', CURRENT_TIMESTAMP),
+(2, 1, 2, 1200.00, 'despesa', 'Pagamento de aluguel', '2025-06-02', CURRENT_TIMESTAMP),
+(3, 1, 3, 250.50, 'despesa', 'Compras no supermercado', '2025-06-03', CURRENT_TIMESTAMP),
+(4, 1, 4, 500.00, 'receita', 'Projeto freelance', '2025-06-04', CURRENT_TIMESTAMP),
+(5, 1, 5, 100.00, 'despesa', 'Combustível', '2025-06-05', CURRENT_TIMESTAMP);
+
+-- Insert sample transactions for userId=2
+INSERT INTO transacoes (transacao_id, usuario_id, categoria_id, valor, tipo_transacao, descricao, data_transacao, criado_em) VALUES
+(6, 2, 6, 2500.00, 'receita', 'Salário mensal', '2025-06-01', CURRENT_TIMESTAMP),
+(7, 2, 7, 150.00, 'despesa', 'Conta de luz', '2025-06-02', CURRENT_TIMESTAMP);
