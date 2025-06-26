@@ -19,7 +19,7 @@ public class TransactionService {
     }
 
     public List<Transaction> getTransactionsByUserId(Long userId){
-        return transactionRepo.findByUserId(userId);
+        return transactionRepo.findByUserUserId(userId);
     }
 
     public void saveTransaction(Transaction transaction){

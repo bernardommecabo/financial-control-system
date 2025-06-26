@@ -39,7 +39,7 @@ public class TransactionController {
     @GetMapping("/transactions/new-transaction")
     public String newTransactionForm(Model model) {
         model.addAttribute("transaction", new Transaction());
-        model.addAttribute("categories", categoryRepo.findByUserId(1L));
+        model.addAttribute("categories", categoryRepo.findByUserUserId(1L));
         return "new-transaction";
     }
 
